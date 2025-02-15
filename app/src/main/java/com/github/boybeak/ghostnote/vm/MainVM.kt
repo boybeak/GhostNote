@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 class MainVM(application: Application) : AndroidViewModel(application) {
     private val db = getApplication<Application>().database // 通过 Application 获取数据库
     val notes = mutableStateListOf<Note>()
+    val hasNotes get() = notes.isNotEmpty()
     val showCreateDialog = mutableStateOf(false)
 
     val selectedNotes = mutableStateListOf<Note>()
@@ -25,13 +26,6 @@ class MainVM(application: Application) : AndroidViewModel(application) {
                 notes.clear()
                 notes.addAll(newNotes)
             }
-        }
-    }
-
-    fun createNote(note: Note) {
-        viewModelScope.launch {
-            db.noteDao().createNotes(note)
-            // 无需手动刷新，Flow 会自动触发更新
         }
     }
 

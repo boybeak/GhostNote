@@ -2,15 +2,18 @@ package com.github.boybeak.ghostnote.compose
 
 import android.util.Log
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -31,17 +34,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.github.boybeak.ghostnote.R
 import com.github.boybeak.ghostnote.vm.CreateVM
 import com.github.boybeak.ghostnote.vm.MainVM
 
@@ -130,55 +137,69 @@ fun MainView() {
     ) { innerPadding ->
         Column(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StaggeredVerticalGrid(
-                modifier = Modifier.padding(8.dp),
-                horizontalSpacing = 8.dp,
-                verticalSpacing = 8.dp
-            ) {
-                mainVM.notes.forEach { note ->
-                    Card(
-                        modifier = Modifier
-                            .pointerInput(Unit) {
-                                detectTapGestures(
-                                    onTap = {
-                                        Log.d("AAA", "onTap")
-                                        if (mainVM.isSelectedMode) {
+            if (mainVM.hasNotes) {
+                StaggeredVerticalGrid(
+                    modifier = Modifier.padding(8.dp),
+                    horizontalSpacing = 8.dp,
+                    verticalSpacing = 8.dp
+                ) {
+                    mainVM.notes.forEach { note ->
+                        Card(
+                            modifier = Modifier
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onTap = {
+                                            Log.d("AAA", "onTap")
+                                            if (mainVM.isSelectedMode) {
+                                                mainVM.toggleSelectNote(note)
+                                            }
+                                        },
+                                        onLongPress = {
                                             mainVM.toggleSelectNote(note)
+                                            // 处理长按事件
                                         }
-                                    },
-                                    onLongPress = {
-                                        mainVM.toggleSelectNote(note)
-                                        // 处理长按事件
-                                    }
-                                )
-                            },
-                        border = if (mainVM.isSelected(note)) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-                        colors = if (mainVM.isSelected(note)) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)) else CardDefaults.cardColors()
-                    ) {
-                        Column (
-                            modifier = Modifier.padding()
+                                    )
+                                },
+                            border = if (mainVM.isSelected(note)) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+                            colors = if (mainVM.isSelected(note)) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)) else CardDefaults.cardColors()
                         ) {
-                            if (note.title.isNotBlank()) {
-                                Text(
-                                    note.title,
-                                    modifier = Modifier.padding(8.dp),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                            if (note.text.isNotBlank()) {
-                                Text(
-                                    note.text,
-                                    modifier = Modifier.padding(8.dp),
-                                    fontSize = note.textSize.sp
-                                )
+                            Column (
+                                modifier = Modifier.padding()
+                            ) {
+                                if (note.title.isNotBlank()) {
+                                    Text(
+                                        note.title,
+                                        modifier = Modifier.padding(8.dp),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                if (note.text.isNotBlank()) {
+                                    Text(
+                                        note.text,
+                                        modifier = Modifier.padding(8.dp),
+                                        fontSize = note.textSize.sp
+                                    )
+                                }
                             }
                         }
                     }
                 }
+            } else {
+                Image(
+                    painter = painterResource(R.drawable.ic_ghost_outline),
+                    contentDescription = "",
+                    modifier = Modifier
+                        .padding(top = 120.dp)
+                        .fillMaxWidth(fraction = 0.5f)
+                        .aspectRatio(1f),
+                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                )
             }
         }
 
