@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">GhostNote</string>
+    <string name="title_activity_create">CreateActivity</string>
+</resources>
