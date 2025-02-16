@@ -192,13 +192,17 @@ fun MainView() {
                             border = if (mainVM.isSelected(note)) BorderStroke(
                                 2.dp,
                                 MaterialTheme.colorScheme.primary
-                            ) else null,
-                            colors = if (mainVM.isSelected(note)) CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                            ) else CardDefaults.cardColors()
+                            ) else null
                         ) {
                             Column(
-                                modifier = Modifier.padding()
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(
+                                        color = if (mainVM.isSelected(note)) MaterialTheme.colorScheme.primary.copy(
+                                            alpha = 0.3f
+                                        ) else Color(note.bgColor)
+                                    )
+                                    .padding()
                             ) {
                                 if (note.title.isNotBlank()) {
                                     Text(
@@ -339,16 +343,6 @@ fun CreateDialog() {
                 }
                 HorizontalDivider()
                 Row {
-                    /*FilledIconToggleButton(
-                        checked = createVM.snap.value,
-
-                        onCheckedChange = {
-                            Log.d("aaa", "onCheckedChange it=$it")
-                            createVM.snap.value = it
-                        }
-                    ) {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = "")
-                    }*/
                     IconButton(
                         onClick = {
                             mainVM.dismissCreateDialog()
@@ -371,7 +365,7 @@ fun CreateDialog() {
                             contentDescription = ""
                         )
                     }
-                    FilledTonalIconToggleButton (
+                    FilledTonalIconToggleButton(
                         checked = createVM.showTextSizeSlider,
                         onCheckedChange = { checked ->
                             if (checked) {
