@@ -1,10 +1,15 @@
 package com.github.boybeak.ghostnote.compose
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,33 +20,52 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconToggleButtonColors
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedIconToggleButton
+import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.IntState
+import androidx.compose.runtime.MutableIntState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -165,10 +189,15 @@ fun MainView() {
                                         }
                                     )
                                 },
-                            border = if (mainVM.isSelected(note)) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
-                            colors = if (mainVM.isSelected(note)) CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)) else CardDefaults.cardColors()
+                            border = if (mainVM.isSelected(note)) BorderStroke(
+                                2.dp,
+                                MaterialTheme.colorScheme.primary
+                            ) else null,
+                            colors = if (mainVM.isSelected(note)) CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                            ) else CardDefaults.cardColors()
                         ) {
-                            Column (
+                            Column(
                                 modifier = Modifier.padding()
                             ) {
                                 if (note.title.isNotBlank()) {
@@ -198,7 +227,11 @@ fun MainView() {
                         .padding(top = 120.dp)
                         .fillMaxWidth(fraction = 0.5f)
                         .aspectRatio(1f),
-                    colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f))
+                    colorFilter = ColorFilter.tint(
+                        color = MaterialTheme.colorScheme.primary.copy(
+                            alpha = 0.6f
+                        )
+                    )
                 )
             }
         }
@@ -239,10 +272,12 @@ fun CreateDialog() {
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(Color.Transparent),
+                        .background(color = Color(createVM.bgColor.intValue)),
                     maxLines = 1,
                     singleLine = true,
                     colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color(createVM.bgColor.intValue),
+                        focusedContainerColor = Color(createVM.bgColor.intValue),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         disabledIndicatorColor = Color.Transparent
@@ -252,7 +287,11 @@ fun CreateDialog() {
                 TextField(
                     createVM.text.value,
                     placeholder = {
-                        Text("Text", color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
+                        Text(
+                            "Text",
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                            fontSize = createVM.textSize.floatValue.sp
+                        )
                     },
                     onValueChange = {
                         createVM.text.value = it
@@ -261,13 +300,43 @@ fun CreateDialog() {
                         .fillMaxWidth()
                         .height(256.dp)
                         .background(Color.Transparent),
+                    shape = RectangleShape,
+                    textStyle = TextStyle(
+                        fontSize = createVM.textSize.floatValue.sp
+                    ),
                     colors = TextFieldDefaults.colors(
+                        unfocusedContainerColor = Color(createVM.bgColor.intValue),
+                        focusedContainerColor = Color(createVM.bgColor.intValue),
                         focusedIndicatorColor = Color.Transparent,
                         unfocusedIndicatorColor = Color.Transparent,
                         disabledIndicatorColor = Color.Transparent
                     )
                 )
-
+                AnimatedVisibility(
+                    visible = createVM.showAnyConfig
+                ) {
+                    HorizontalDivider()
+                }
+                AnimatedVisibility(
+                    visible = createVM.showColorPicker
+                ) {
+                    ColorPicker(createVM.bgColor.intValue) { color ->
+                        createVM.bgColor.intValue = color
+                    }
+                }
+                AnimatedVisibility(
+                    visible = createVM.showTextSizeSlider
+                ) {
+                    Slider(
+                        value = createVM.textSize.floatValue,
+                        valueRange = 10f..24f,
+                        onValueChange = {
+                            createVM.textSize.floatValue = it
+                        },
+                        onValueChangeFinished = {
+                        }
+                    )
+                }
                 HorizontalDivider()
                 Row {
                     /*FilledIconToggleButton(
@@ -286,6 +355,36 @@ fun CreateDialog() {
                         }
                     ) {
                         Icon(Icons.Default.KeyboardArrowDown, contentDescription = "")
+                    }
+                    FilledTonalIconToggleButton(
+                        checked = createVM.showColorPicker,
+                        onCheckedChange = { checked ->
+                            if (checked) {
+                                createVM.showColorPicker()
+                            } else {
+                                createVM.dismissColorPicker()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_palette),
+                            contentDescription = ""
+                        )
+                    }
+                    FilledTonalIconToggleButton (
+                        checked = createVM.showTextSizeSlider,
+                        onCheckedChange = { checked ->
+                            if (checked) {
+                                createVM.showTextSizeSlider()
+                            } else {
+                                createVM.dismissTextSizeSlider()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_format_size),
+                            contentDescription = ""
+                        )
                     }
                     Spacer(modifier = Modifier.weight(1f))
                     IconButton(
@@ -309,5 +408,48 @@ fun CreateDialog() {
             }
         }
 
+    }
+}
+
+@Composable
+fun ColorPicker(color: Int, onChanged: (color: Int) -> Unit) {
+    val context = LocalContext.current
+    val colors = intArrayOf(
+        Color.Transparent.toArgb(),
+        context.getColor(android.R.color.holo_green_light),
+        context.getColor(android.R.color.holo_blue_light),
+        context.getColor(android.R.color.holo_orange_light),
+        context.getColor(android.R.color.holo_red_light),
+        context.getColor(android.R.color.holo_purple),
+    )
+    var cc by remember { mutableIntStateOf(color) }
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        colors.forEach { c ->
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .clickable {
+                        cc = c
+                        onChanged.invoke(c)
+                    }
+                    .background(color = Color(c), shape = CircleShape)
+                    .border(
+                        width = if (cc == c) 2.dp else 1.dp,
+                        color = if (cc == c) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondary,
+                        shape = CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                if (c == cc) {
+                    Icon(Icons.Default.Check, contentDescription = "")
+                }
+            }
+        }
     }
 }
